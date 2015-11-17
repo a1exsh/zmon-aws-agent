@@ -9,7 +9,7 @@ import hashlib
 import time
 
 import string
-BASE_LIST = string.digits + string.letters
+BASE_LIST = string.digits + string.ascii_letters
 BASE_DICT = dict((c, i) for i, c in enumerate(BASE_LIST))
 
 logging.getLogger('urllib3.connectionpool').setLevel(logging.WARN)
