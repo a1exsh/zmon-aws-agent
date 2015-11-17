@@ -15,6 +15,6 @@ RUN chmod uog+w /etc/entity_service_url
 
 ADD scm-source.json /scm-source.json
 
-ADD zmon-agent.py /zmon-agent.py
+ADD zmon_agent /zmon_agent
 
 CMD ["bash", "start.sh"]
