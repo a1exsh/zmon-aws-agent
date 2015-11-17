@@ -3,7 +3,6 @@ from __future__ import print_function
 import boto3
 from botocore.exceptions import ClientError
 import logging
-import json
 import base64
 import yaml
 import hashlib
