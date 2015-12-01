@@ -158,8 +158,8 @@ def get_running_apps(region):
                 ins['runtime'] = user_data['runtime']
 
                 if 'StackVersion' in tags:
-                    ins['stack'] = tags['Name']
-                    ins['resource_id'] = tags['aws:cloudformation:logical-id']
+                    ins['stack'] = tags.get('Name', None)
+                    ins['resource_id'] = tags.get('aws:cloudformation:logical-id', None)
 
                 assign_stack_name_and_version_from_tags(ins, tags)
 
