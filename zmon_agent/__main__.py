@@ -5,8 +5,19 @@ import argparse
 import json
 import logging
 import requests
+from datetime import datetime
 
 from . import agent
+
+
+def json_serial(obj):
+    """JSON serializer for objects not serializable by default json code"""
+
+    if isinstance(obj, datetime):
+        serial = obj.isoformat()
+        return serial
+    raise TypeError("Type not serializable")
+
 
 def main():
     argp = argparse.ArgumentParser(description='ZMon AWS Agent')
@@ -116,7 +127,7 @@ def main():
                 logging.info("Adding {} entity: {}".format(entity_type, entity['id']))
 
                 r = requests.put(args.entityservice, auth=auth,
-                                 data=json.dumps(entity),
+                                 data=json.dumps(entity, default=json_serial),
                                  headers={'content-type': 'application/json'})
 
                 logging.info("...%s", r.status_code)

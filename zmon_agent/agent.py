@@ -146,6 +146,8 @@ def get_running_apps(region):
                     ins['stack'] = tags['Name']
                     ins['resource_id'] = tags['aws:cloudformation:logical-id']
 
+                assign_stack_name_and_version_from_tags(ins, tags)
+
                 if 'Name' in tags and 'cassandra' in tags['Name'] and 'opscenter' not in tags['Name']:
                     cas = ins.copy()
                     cas['type'] = 'cassandra'
@@ -171,10 +173,20 @@ def get_running_elbs(region, acc):
 
     # get all the tags and cache them in a dict
     elb_names = [e['LoadBalancerName'] for e in elbs]
-    tag_desc = elb_client.describe_tags(LoadBalancerNames=elb_names)
-    tags = { d['LoadBalancerName']: get_tags_dict(d['Tags'])
-             for d in tag_desc['TagDescriptions'] }
 
+    #
+    # boto3 places an arbitrary and undocumented limit of 20 ELB names per
+    # describe_tags() request, and it doesn't provide any sort of paginator:
+    # work around it in a really ugly way
+    #
+    if elb_names:
+        name_chunks = [elb_names[i: i + 20] for i in range(0, len(elb_names), 20)]
+        tag_desc_chunks = [elb_client.describe_tags(LoadBalancerNames=names)
+                           for names in name_chunks]
+        tags = { d['LoadBalancerName']: d['Tags']
+                 for tag_desc in tag_desc_chunks for d in tag_desc['TagDescriptions'] }
+    else:
+        tags = {}
     lbs = []
 
     for e in elbs:
@@ -187,7 +199,8 @@ def get_running_elbs(region, acc):
         lb['name'] = name
         lb['scheme'] = e['Scheme']
 
-        assign_stack_name_and_version_from_tags(lb, tags[name])
+        if name in tags:
+            assign_stack_name_and_version_from_tags(lb, tags[name])
 
         lb['url'] = 'https://{}'.format(lb['host'])
         lb['region'] = region
@@ -238,7 +251,7 @@ def get_auto_scaling_groups(region, acc):
 
         assign_stack_name_and_version_from_tags(sg, get_tags_dict(g['Tags']))
 
-        instance_ids = [i['InstanceId'] for i in g['Instances']]
+        instance_ids = [i['InstanceId'] for i in g['Instances'] if i['LifecycleState'] == 'InService']
         reservations = ec2_client.describe_instances(InstanceIds=instance_ids)['Reservations']
         sg['instances'] = []
         for r in reservations:
@@ -276,6 +289,7 @@ def get_elasticache_nodes(region, acc):
                 "cluster_num_nodes": c["NumCacheNodes"],
                 "host": n["Endpoint"]["Address"],
                 "port": n["Endpoint"]["Port"],
+                "instance_type": c["CacheNodeType"],
             }
 
             if "ReplicationGroupId" in c:
