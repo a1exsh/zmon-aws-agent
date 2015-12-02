@@ -2,3 +2,4 @@ pyyaml
 boto3>=1.2.1
 flake8
 pytest
+moto
