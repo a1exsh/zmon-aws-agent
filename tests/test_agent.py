@@ -4,14 +4,20 @@ import moto
 from zmon_agent import agent
 
 
+#
+# The following block is required for Python2 compatibility with
+# HTTPretty which is used by moto, for details see:
+#
+#   https://github.com/spulec/moto/issues/474
+#
 try:
-  from botocore.vendored.requests.packages.urllib3 import connection
+    from botocore.vendored.requests.packages.urllib3 import connection
 
-  def fake_ssl_wrap_socket(sock, *args, **kwargs):
-    return sock
-  connection.ssl_wrap_socket = fake_ssl_wrap_socket
+    def fake_ssl_wrap_socket(sock, *args, **kwargs):
+      return sock
+      connection.ssl_wrap_socket = fake_ssl_wrap_socket
 except ImportError:
-  pass
+    pass
 
 
 class TestAgent:
