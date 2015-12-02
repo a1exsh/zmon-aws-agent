@@ -7,8 +7,8 @@ import base64
 import yaml
 import hashlib
 import time
-
 import string
+
 BASE_LIST = string.digits + string.ascii_letters
 BASE_DICT = dict((c, i) for i, c in enumerate(BASE_LIST))
 
