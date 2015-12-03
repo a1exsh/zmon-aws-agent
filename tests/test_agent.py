@@ -15,7 +15,8 @@ try:
 
     def fake_ssl_wrap_socket(sock, *args, **kwargs):
       return sock
-      connection.ssl_wrap_socket = fake_ssl_wrap_socket
+
+    connection.ssl_wrap_socket = fake_ssl_wrap_socket
 except ImportError:
     pass
 
