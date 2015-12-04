@@ -20,14 +20,20 @@ try:
 except ImportError:
     pass
 
+#
+# Uncomment this to get some detailed info about test failure:
+#
+#import logging
+#boto3.set_stream_logger(name='botocore', level=logging.DEBUG)
 
+
+@moto.mock_ec2
 class TestAgent:
     @pytest.fixture(autouse=True)
     def setup(self):
         self.region = 'eu-west-1'
         self.acc = 'aws:1234567890'
 
-    @moto.mock_ec2
     def test_get_running_apps(self):
         apps = agent.get_running_apps(self.region)
 
@@ -37,7 +43,44 @@ class TestAgent:
 
     @moto.mock_autoscaling
     def test_get_auto_scaling_groups(self):
+        ec2 = boto3.client('ec2', region_name=self.region)
+
+        autoscaling = boto3.client('autoscaling', region_name=self.region)
+        #
+        # Even though we are using boto3 here, which as opposed to
+        # boto doesn't have a requirement of Launch Configuration for
+        # the next step, moto does have that requirement.
+        #
+        autoscaling.create_launch_configuration(
+            LaunchConfigurationName='launch_conf-1'
+        )
+
+        autoscaling.create_auto_scaling_group(
+            AutoScalingGroupName='asg-1',
+            LaunchConfigurationName='launch_conf-1',
+            MinSize=1,
+            MaxSize=5,
+            DesiredCapacity=3,
+            HealthCheckGracePeriod=300,
+            Tags=[
+                {
+                    'Key': 'StackName',
+                    'Value': 'test_stack'
+                },
+                {
+                    'Key': 'StackVersion',
+                    'Value': 'v1'
+                },
+            ]
+        )
+
         groups = agent.get_auto_scaling_groups(self.region, self.acc)
+
+        assert len(groups) == 1
+        g = groups[0]
+        assert len(g['instances']) == 3
+        assert g['stack_name'] == 'test_stack'
+        assert g['stack_version'] == 'v1'
 
     #@moto.mock_???
 #    def test_get_elasticache_nodes(self):
