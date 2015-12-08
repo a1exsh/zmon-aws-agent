@@ -39,6 +39,38 @@ class TestAgent:
 
     @moto.mock_elb
     def test_get_running_elbs(self):
+        elb = boto3.client('elb', region_name=self.region)
+        elb.create_load_balancer(
+            LoadBalancerName='elb-1',
+            Listeners=[
+                {
+                    'Protocol': 'HTTP',
+                    'LoadBalancerPort': 80,
+                    'InstancePort': 8080,
+                },
+            ],
+            # AvailabilityZones=[
+            #     'string',
+            # ],
+            # Subnets=[
+            #     'string',
+            # ],
+            # SecurityGroups=[
+            #     'string',
+            # ],
+            # Scheme='string',
+            Tags=[
+                {
+                    'Key': 'StackName',
+                    'Value': 'test_stack'
+                },
+                {
+                    'Key': 'StackVersion',
+                    'Value': 'v1'
+                },
+            ]
+        )
+
         elbs = agent.get_running_elbs(self.region, self.acc)
 
     @moto.mock_autoscaling
