@@ -49,16 +49,10 @@ class TestAgent:
                     'InstancePort': 8080,
                 },
             ],
-            # AvailabilityZones=[
-            #     'string',
-            # ],
-            # Subnets=[
-            #     'string',
-            # ],
-            # SecurityGroups=[
-            #     'string',
-            # ],
-            # Scheme='string',
+        )
+        # can't create ELB with tags right away with moto, workaround:
+        elb.add_tags(
+            LoadBalancerNames=['elb-1'],
             Tags=[
                 {
                     'Key': 'StackName',
@@ -71,7 +65,12 @@ class TestAgent:
             ]
         )
 
-        elbs = agent.get_running_elbs(self.region, self.acc)
+        res = agent.get_running_elbs(self.region, self.acc)
+
+        assert len(res) == 1
+        e0 = res[0]
+        assert e0['stack_name'] == 'test_stack'
+        assert e0['stack_version'] == 'v1'
 
     @moto.mock_autoscaling
     def test_get_auto_scaling_groups(self):

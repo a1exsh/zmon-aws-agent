@@ -200,7 +200,7 @@ def get_running_elbs(region, acc):
         lb['scheme'] = e['Scheme']
 
         if name in tags:
-            assign_stack_name_and_version_from_tags(lb, tags[name])
+            assign_stack_name_and_version_from_tags(lb, get_tags_dict(tags[name]))
 
         lb['url'] = 'https://{}'.format(lb['host'])
         lb['region'] = region
