@@ -19,6 +19,9 @@ import string
 BASE_LIST = string.digits + string.letters
 BASE_DICT = dict((c, i) for i, c in enumerate(BASE_LIST))
 
+# use for all requests HTTP calls
+REQUESTS_TIMEOUT = 2
+
 logging.getLogger('urllib3.connectionpool').setLevel(logging.WARN)
 
 def json_serial(obj):
@@ -408,7 +411,7 @@ def main():
     if not args.region:
         logging.info("Trying to figure out region...")
         try:
-            response = requests.get('http://169.254.169.254/latest/meta-data/placement/availability-zone', timeout=2)
+            response = requests.get('http://169.254.169.254/latest/meta-data/placement/availability-zone', timeout=REQUESTS_TIMEOUT)
         except:
             logging.error("Region was not specified as a parameter and can not be fetched from instance meta-data!")
             raise
@@ -477,7 +480,8 @@ def main():
             # removing all entities
             query = {'infrastructure_account': infrastructure_account, 'region': region, 'created_by': 'agent'}
             r = requests.get(args.entityservice,
-                             params={'query': json.dumps(query)})
+                             params={'query': json.dumps(query)},
+                             timeout=REQUESTS_TIMEOUT)
             entities = r.json()
 
             existing_entities = {}
@@ -496,7 +500,8 @@ def main():
             for e in to_remove:
                 logging.info("removing instance: {}".format(e))
 
-                r = requests.delete(args.entityservice + "{}/".format(e), auth=auth)
+                r = requests.delete(args.entityservice + "{}/".format(e), auth=auth,
+                                    timeout=REQUESTS_TIMEOUT)
 
                 logging.info("...%s", r.status_code)
 
@@ -505,7 +510,8 @@ def main():
 
                 r = requests.put(args.entityservice, auth=auth,
                                  data=json.dumps(entity, default=json_serial),
-                                 headers={'content-type': 'application/json'})
+                                 headers={'content-type': 'application/json'},
+                                 timeout=REQUESTS_TIMEOUT)
 
                 logging.info("...%s", r.status_code)
 
